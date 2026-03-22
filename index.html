@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Mi JSX</title>
+  <!-- React y ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- Babel Standalone -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+  <!-- Contenedor donde se renderiza el JSX -->
+  <div id="root"></div>
+
+  <script type="text/babel">
+
+import { useState } from "react";
+import { Check, ChevronDown, ChevronRight, X, Map, HelpCircle, BookOpen, Code, List, Zap } from "lucide-react";
+
+const ROADMAP_STAGES = [
+  {
+    id: "mindset", icon: "🧠", title: "Fundamentos de Automatización", subtitle: "Mentalidad & Diferencias con QA Manual",
+    color: "#6366f1", duration: "1-2 semanas",
+    skills: ["Pirámide de testing", "ROI de automatización", "Qué automatizar vs qué no", "Shift-left testing"],
+    description: "La transición más importante no es técnica, es mental. Entender cuándo automatizar y por qué es la base de todo QA Automatizador.",
+    theory: [
+      { title: "Pirámide de Testing", content: "La pirámide de testing de Mike Cohn propone 3 capas: Unit tests (base, más rápidos y baratos), Integration tests (medio), E2E tests (punta, más lentos y costosos). Un buen portfolio automatiza más en la base." },
+      { title: "Cuándo NO automatizar", content: "No todo debe automatizarse: tests exploratorios, UI que cambia constantemente, casos con baja frecuencia de ejecución. El costo de mantenimiento puede superar el beneficio." },
+      { title: "ROI de Automatización", content: "Fórmula básica: ROI = (Tiempo_manual × Frecuencia - Tiempo_automatizado) / Costo_creación. Un test que tarda 5min manual y corre diario recupera inversión en ~2 meses." },
+      { title: "Shift-Left Testing", content: "Mover las pruebas hacia el inicio del ciclo de desarrollo. QA automatizador trabaja con devs desde el diseño, no solo al final del sprint." },
+    ],
+  },
+  {
+    id: "programming", icon: "💻", title: "Programación Base", subtitle: "Variables, Funciones, Loops, OOP básico",
+    color: "#8b5cf6", duration: "3-4 semanas",
+    skills: ["Variables y tipos de datos", "Funciones y scope", "Loops y condicionales", "Clases y herencia básica", "Manejo de errores"],
+    description: "No necesitas ser desarrollador senior, pero sí dominar los fundamentos de programación en al menos un lenguaje (JavaScript o Python recomendados para QA).",
+    theory: [
+      { title: "Variables y Tipos", content: "En JavaScript: const (inmutable), let (mutable con scope de bloque), var (evitar). Tipos: string, number, boolean, array, object. En Python: tipado dinámico, convención snake_case." },
+      { title: "Funciones Puras", content: "Una función pura retorna siempre el mismo output para el mismo input y no tiene efectos secundarios. Ideal para helpers de tests: formatDate(), generateTestData(), assertResponse()." },
+      { title: "OOP para QA", content: "Page Object Model (el patrón más importante en QA) usa clases. Cada página web = una clase con: propiedades (selectores) y métodos (acciones). class LoginPage { constructor() { this.emailInput = '#email' } }" },
+      { title: "Async/Await", content: "La automatización web es asíncrona. await browser.click('#btn') espera a que la acción termine. try/catch maneja timeouts y errores inesperados en los tests." },
+    ],
+  },
+  {
+    id: "git", icon: "🌿", title: "Control de Versiones", subtitle: "Git esencial para QA",
+    color: "#f59e0b", duration: "1 semana",
+    skills: ["git clone/add/commit/push", "Branching strategy", "Pull Requests", "Resolución de conflictos", "Git hooks para QA"],
+    description: "Tus tests son código y deben vivir en un repositorio. Git es innegociable para cualquier rol técnico moderno.",
+    theory: [
+      { title: "Flujo básico", content: "git clone → crear rama (git checkout -b feat/add-login-tests) → cambios → git add . → git commit -m 'test: add login validation' → git push → Pull Request → merge." },
+      { title: "Conventional Commits para QA", content: "Usa prefijos: test: (agregar/modificar tests), fix: (corregir test roto), chore: (mantenimiento). Esto hace el historial legible en CI/CD." },
+      { title: "Git Hooks", content: "pre-commit hook puede ejecutar linter en tus tests antes de hacer commit. Así no subes código sucio al repo. Herramienta: husky para JS." },
+      { title: "Estrategia de ramas", content: "Recomendado para QA: main (estable), develop (integración), feature/test-X (tu trabajo diario). Los tests deben correr en cada merge a develop via CI/CD." },
+    ],
+  },
+  {
+    id: "web-frameworks", icon: "🌐", title: "Frameworks de Automatización Web", subtitle: "Selenium, Playwright, Cypress",
+    color: "#10b981", duration: "4-6 semanas",
+    skills: ["Selectores CSS y XPath", "Page Object Model", "Waits explícitos e implícitos", "Screenshots y videos", "Tests cross-browser"],
+    description: "El núcleo del QA Automatizador. Playwright es el estándar moderno recomendado para nuevos proyectos. Cypress es excelente para frontend. Selenium sigue siendo relevante en empresas grandes.",
+    theory: [
+      { title: "Playwright vs Cypress vs Selenium", content: "Playwright: multi-browser nativo, más rápido, soporte para mobile. Cypress: mejor DX, solo Chromium-based por defecto. Selenium: más antiguo, más lento pero universal y con más documentación." },
+      { title: "Selectores robustos", content: "Orden de preferencia: 1) data-testid='submit-btn' (más estable), 2) aria-label (accesibilidad), 3) texto visible, 4) CSS class, 5) XPath (último recurso). Los selectores por clase de CSS son frágiles." },
+      { title: "Page Object Model", content: "Patrón que separa la lógica de la UI de la lógica del test. Ventaja: si cambia un selector, solo cambias el POM, no todos los tests. Clase LoginPage encapsula todo lo relacionado con esa pantalla." },
+      { title: "Waits inteligentes", content: "Nunca uses sleep/pause fijo. Usa waits explícitos: waitForSelector, waitForResponse, waitForNetworkIdle. Los waits fijos hacen los tests lentos y frágiles (flaky tests)." },
+    ],
+  },
+  {
+    id: "api-testing", icon: "🔌", title: "API Testing", subtitle: "Postman → RestAssured / Supertest",
+    color: "#f97316", duration: "3-4 semanas",
+    skills: ["REST/HTTP métodos", "Assertions en respuestas", "Variables de ambiente", "Auth (Bearer, OAuth)", "Contract testing"],
+    description: "Las APIs son más estables que la UI y más rápidas de testear. El mejor QA automatizador domina tanto UI como API testing.",
+    theory: [
+      { title: "HTTP Basics para QA", content: "GET (leer), POST (crear), PUT/PATCH (actualizar), DELETE (borrar). Status codes: 200 OK, 201 Created, 400 Bad Request, 401 Unauthorized, 404 Not Found, 500 Server Error." },
+      { title: "Assertions en APIs", content: "Verificar: status code, estructura del body (schema), valores específicos, headers (Content-Type, Authorization), tiempo de respuesta (<500ms es buena práctica)." },
+      { title: "Postman Collections", content: "Organiza tests en Collections por feature. Usa variables de entorno ({{baseUrl}}, {{token}}) para cambiar entre staging y producción. Los Pre-request Scripts configuran auth automáticamente." },
+      { title: "Contract Testing", content: "Verifica que el contrato (schema) entre frontend y backend no cambie. Si el backend cambia un campo, el contract test falla antes de que llegue a producción. Herramienta: Pact." },
+    ],
+  },
+  {
+    id: "cicd", icon: "⚙️", title: "CI/CD Básico", subtitle: "Jenkins, GitHub Actions",
+    color: "#ec4899", duration: "2-3 semanas",
+    skills: ["YAML para pipelines", "Triggers (push, PR, schedule)", "Artefactos y reportes", "Parallelización de tests", "Notificaciones"],
+    description: "Tus tests deben correr solos, sin que nadie los ejecute manualmente. CI/CD es lo que transforma tus scripts en una red de seguridad real.",
+    theory: [
+      { title: "GitHub Actions básico", content: "Un workflow YAML define: trigger (on: push), jobs (runs-on: ubuntu-latest), steps (checkout, setup-node, npm install, npm test). Es el más accesible para empezar." },
+      { title: "Cuándo correr los tests", content: "Estrategia: Unit tests en cada commit (2min), Integration en cada PR (10min), E2E completo nightly o en merge a main (30-60min). Balancear velocidad vs cobertura." },
+      { title: "Test Reporting en CI", content: "Los pipelines deben generar reportes HTML (Allure, HTML Reporter). Los resultados deben ser visibles sin acceder al servidor. Los tests fallados bloquean el merge (branch protection rules)." },
+      { title: "Paralelización", content: "GitHub Actions matrix strategy corre el mismo job con diferentes parámetros: browsers [chrome, firefox, safari] o archivos de test en paralelo. Reduce tiempo de ejecución dramáticamente." },
+    ],
+  },
+  {
+    id: "reporting", icon: "📊", title: "Reporting y Métricas", subtitle: "Visibilidad del trabajo de QA",
+    color: "#14b8a6", duration: "1-2 semanas",
+    skills: ["Allure Reports", "Test coverage metrics", "Flaky test tracking", "Dashboards de calidad", "Bug reports efectivos"],
+    description: "Un test que falla sin que nadie lo vea no protege a nadie. El reporting es cómo el QA demuestra su valor al equipo.",
+    theory: [
+      { title: "Allure Framework", content: "Allure genera reportes HTML interactivos con: gráfico de tendencias, breakdown por suite/feature, capturas de pantalla en fallos, tiempo de ejecución. Se integra con Playwright, Jest, TestNG." },
+      { title: "Métricas clave", content: "Track: % tests pasando (goal: >95%), Flaky rate (<5%), Tiempo de ejecución por suite, Cobertura de features críticos (login, checkout, pago = 100%), Tests nuevos por sprint." },
+      { title: "Flaky Tests", content: "Un flaky test falla intermitentemente sin cambios en el código. Son el mayor enemigo de la confianza en la automatización. Causas: race conditions, data dependiente, ambiente inestable." },
+      { title: "Bug Reports de calidad", content: "Un buen bug report tiene: título descriptivo, pasos reproducibles, resultado actual vs esperado, evidencia (screenshot/video), ambiente, severidad. Si automatizas, el test mismo puede ser la evidencia." },
+    ],
+  },
+];
+
+const QUIZ_DATA = {
+  mindset: [
+    { q: "¿Cuál es la forma más correcta de decidir si automatizar un caso de prueba?", opts: ["Automatizar todo lo que se pueda", "Calcular el ROI considerando costo de creación vs frecuencia de ejecución", "Solo automatizar los tests que sean fáciles", "Automatizar únicamente el happy path"], correct: 1, explanation: "El ROI es el criterio principal. Si el costo de crear y mantener el test supera el beneficio de ahorrarse ejecuciones manuales, no vale la pena automatizar." },
+    { q: "¿Qué tests deben estar en la BASE de la pirámide de testing?", opts: ["Tests E2E (end-to-end)", "Tests de UI", "Tests unitarios", "Tests de performance"], correct: 2, explanation: "Los tests unitarios son la base: más rápidos, más baratos, más estables y más fáciles de depurar cuando fallan." },
+    { q: "¿Qué significa 'Shift-Left Testing'?", opts: ["Mover pruebas al lado izquierdo del pipeline", "Incorporar testing más temprano en el ciclo de desarrollo", "Hacer pruebas solo al inicio del proyecto", "Dar responsabilidad de QA a los devs"], correct: 1, explanation: "Shift-Left significa involucrar a QA desde el diseño y los requisitos, no solo al final del sprint. Detectar defectos temprano es exponencialmente más barato." },
+    { q: "¿Cuál de estos escenarios es un MAL candidato para automatización?", opts: ["Test de login que se ejecuta en cada deploy", "Test exploratorio de una nueva feature", "Validación de cálculo de impuestos que corre diario", "Smoke test del flujo de compra"], correct: 1, explanation: "Los tests exploratorios requieren creatividad humana y juicio contextual. La automatización brilla en repetición, no en exploración." },
+    { q: "La diferencia principal entre QA Manual y QA Automatizador es:", opts: ["El QA Automatizador no hace testing manual nunca", "El QA Automatizador escribe código para que las máquinas ejecuten los tests", "El QA Automatizador solo trabaja con APIs", "El QA Automatizador reemplaza completamente al QA manual"], correct: 1, explanation: "La diferencia clave es el código. Un QA Automatizador programa las pruebas para que se ejecuten sin intervención humana, complementando (no reemplazando) al testing manual." },
+  ],
+  programming: [
+    { q: "¿Cuál es la diferencia entre 'const' y 'let' en JavaScript?", opts: ["No hay diferencia", "const no puede ser reasignado, let sí puede", "let es para números, const para strings", "const es más rápido que let"], correct: 1, explanation: "const impide la reasignación de la variable. Usa const por defecto y let solo cuando necesites reasignar. Evita var." },
+    { q: "¿Qué es una función pura?", opts: ["Una función que no tiene parámetros", "Una función que siempre retorna el mismo output para el mismo input y no tiene efectos secundarios", "Una función escrita sin errores", "Una función que solo usa tipos primitivos"], correct: 1, explanation: "Las funciones puras son predecibles y fáciles de testear. En QA, tus helpers de test deben ser funciones puras: generateUser(), formatDate(), assertSchema()." },
+    { q: "En el contexto de OOP para QA, ¿qué patrón usa clases para representar páginas web?", opts: ["Factory Pattern", "Observer Pattern", "Page Object Model (POM)", "Singleton Pattern"], correct: 2, explanation: "Page Object Model es EL patrón de diseño más importante en automatización web. Cada página = una clase con sus selectores y métodos de acción." },
+    { q: "¿Por qué es importante entender async/await en automatización web?", opts: ["Para que los tests sean más bonitos", "Porque las interacciones con el browser son asíncronas y hay que esperar a que completen", "Solo para Node.js, no para Python", "Para hacer los tests más rápidos"], correct: 1, explanation: "Cada click, navegación o espera es asíncrona. Sin async/await, el test continúa antes de que la acción termine, causando errores falsos y flaky tests." },
+    { q: "¿Qué hace el bloque try/catch en un test automatizado?", opts: ["Hace el test más lento", "Captura errores inesperados para manejarlos gracefully", "Es obligatorio en todos los tests", "Hace que los tests nunca fallen"], correct: 1, explanation: "try/catch te permite capturar excepciones específicas (TimeoutError, ElementNotFound) y tomar acciones: tomar screenshot, limpiar el estado, reportar mejor el error." },
+  ],
+  git: [
+    { q: "¿Cuál es el flujo correcto de Git para agregar un nuevo test?", opts: ["Editar en main directamente y hacer push", "checkout -b → cambios → add → commit → push → PR", "Solo hacer commit sin push", "Hacer fork del repo primero"], correct: 1, explanation: "Siempre trabaja en una rama separada. Esto permite code review via PR y no rompe el código de otros mientras trabajas." },
+    { q: "¿Qué prefijo de Conventional Commits debes usar al agregar nuevos tests?", opts: ["feat:", "fix:", "test:", "docs:"], correct: 2, explanation: "test: es el prefijo para agregar o modificar tests. Ejemplos: 'test: add login validation tests', 'test: fix flaky checkout test'." },
+    { q: "¿Qué es un Git hook útil para QA?", opts: ["Un gancho visual en la UI de GitHub", "Un script que se ejecuta automáticamente en eventos de Git (ej: pre-commit ejecuta el linter)", "Una forma de hacer hooks en Selenium", "Un tipo especial de branch"], correct: 1, explanation: "pre-commit hook puede ejecutar tu linter (ESLint, Prettier) antes de cada commit. Así todo el código que llega al repo cumple estándares de calidad." },
+    { q: "¿Para qué sirve 'git stash'?", opts: ["Eliminar cambios permanentemente", "Guardar cambios temporalmente sin hacer commit para cambiar de rama", "Hacer un backup del repo", "Compartir código con el equipo"], correct: 1, explanation: "git stash guarda tus cambios no commiteados en un storage temporal. Útil cuando necesitas cambiar urgente de rama sin perder tu trabajo actual." },
+    { q: "¿Qué es una Pull Request (PR)?", opts: ["Una solicitud de agregar código al repo principal, sujeta a revisión", "Una forma de descargar el repo", "Un tipo de test automatizado", "Un comando de Git"], correct: 0, explanation: "Un PR es una solicitud de merge que permite code review. En QA, tus compañeros pueden revisar tus tests antes de que entren al repo principal." },
+  ],
+  "web-frameworks": [
+    { q: "¿Cuál es el selector MÁS ROBUSTO para un botón de submit en un test automatizado?", opts: ["button.btn-primary.submit", "//button[@class='submit']", "[data-testid='submit-button']", "#submitBtn"], correct: 2, explanation: "data-testid es el selector más robusto porque está ahí específicamente para testing, no cambia con rediseños de UI." },
+    { q: "¿Por qué se debe EVITAR usar sleep/pause fijo en tests de automatización?", opts: ["Por razones de seguridad", "Hace los tests lentos e inestables: espera de más o de menos según la velocidad del ambiente", "El framework no lo soporta", "Es muy difícil de escribir"], correct: 1, explanation: "Un sleep(3000) puede ser insuficiente en CI (más lento) o un desperdicio en local. Los waits explícitos son inteligentes: esperan solo lo necesario." },
+    { q: "¿Qué ventaja tiene Playwright sobre Selenium en el contexto moderno?", opts: ["Playwright es gratuito y Selenium no", "Playwright tiene mejor soporte multi-browser nativo, auto-waits y es más rápido", "Selenium no funciona en Chrome", "Playwright solo funciona con JavaScript"], correct: 1, explanation: "Playwright tiene auto-waits inteligentes por defecto, soporte nativo para Chrome/Firefox/Safari, y APIs modernas para network mocking." },
+    { q: "En Page Object Model, ¿dónde deben vivir los selectores CSS/XPath?", opts: ["Directamente en los archivos de test", "En un archivo de configuración global", "En la clase Page Object correspondiente a cada página", "En una base de datos"], correct: 2, explanation: "Los selectores viven en el Page Object. Si cambia el selector del botón de login, solo cambia LoginPage.js, no los 20 tests que usan ese botón." },
+    { q: "¿Qué es un 'flaky test'?", opts: ["Un test que siempre falla", "Un test que siempre pasa", "Un test que falla intermitentemente sin cambios en el código", "Un test muy lento"], correct: 2, explanation: "Los flaky tests son el mayor problema en automatización. Causas comunes: race conditions, datos de prueba compartidos, dependencias de red, animaciones no esperadas." },
+  ],
+  "api-testing": [
+    { q: "¿Qué HTTP status code indica que un recurso fue CREADO exitosamente?", opts: ["200 OK", "201 Created", "204 No Content", "202 Accepted"], correct: 1, explanation: "201 Created es la respuesta correcta para POST exitoso que crea un recurso. Un QA debe verificar que el status code sea exactamente 201, no solo 2xx." },
+    { q: "Al testear una API, ¿qué deberías verificar además del status code?", opts: ["Solo el status code es suficiente", "El tiempo de respuesta, estructura del body (schema), headers y valores específicos de datos", "Solo los headers de respuesta", "El código fuente de la API"], correct: 1, explanation: "Un test de API completo verifica: status code correcto, estructura/schema del body, valores de datos esperados, headers importantes y tiempo de respuesta." },
+    { q: "¿Para qué sirven las variables de entorno en Postman?", opts: ["Para hacer los tests más coloridos", "Para reutilizar valores como baseUrl y tokens en diferentes ambientes (dev, staging, prod)", "Para encriptar las requests", "Para versionar los tests"], correct: 1, explanation: "Las variables de entorno ({{baseUrl}}, {{authToken}}) permiten cambiar entre ambientes con un click. No hardcodees URLs ni credenciales en los tests." },
+    { q: "¿Qué es el 'Contract Testing' en APIs?", opts: ["El contrato legal de uso de la API", "Verificar que el schema/contrato entre consumidor y proveedor de la API no cambia inesperadamente", "Tests de rendimiento de la API", "Documentación de la API"], correct: 1, explanation: "Contract testing verifica que si el backend cambia el schema de respuesta, un test falla inmediatamente, antes de que el frontend se rompa en producción." },
+    { q: "¿Cuál es la MEJOR práctica para manejar autenticación en tests de API?", opts: ["Hardcodear el token en cada test", "Hacer login programáticamente antes de los tests y reusar el token via variable de ambiente", "No testear endpoints autenticados", "Preguntar el token al usuario antes de correr los tests"], correct: 1, explanation: "El setup de autenticación debe ser automático: el framework hace login, guarda el token, y lo inyecta en cada request. Nunca hardcodees credenciales en el código." },
+  ],
+  cicd: [
+    { q: "¿Cuál es la herramienta de CI/CD MÁS ACCESIBLE para un QA que empieza?", opts: ["Jenkins (requiere servidor propio)", "GitHub Actions (integrado en GitHub, YAML simple, gratuito)", "TeamCity", "Bamboo"], correct: 1, explanation: "GitHub Actions es el punto de entrada ideal: sin infraestructura que mantener, integrado donde ya vive tu código, documentación excelente y tier gratuito generoso." },
+    { q: "¿Cuándo es más apropiado correr los tests E2E completos?", opts: ["En cada commit de cada developer", "En cada push a cualquier rama", "Nightly o en merge a main, no en cada commit", "Solo cuando QA lo decide manualmente"], correct: 2, explanation: "Los E2E son lentos (30-60min). Correrlos en cada commit bloquea a los devs. La estrategia óptima: unit tests en cada commit, E2E nightly o en PR a main." },
+    { q: "¿Qué hace una 'branch protection rule' en el contexto de QA?", opts: ["Protege la branch de ser eliminada", "Requiere que los tests pasen antes de permitir merge a la branch protegida", "Hace la branch privada", "Protege el código con encriptación"], correct: 1, explanation: "Las branch protection rules pueden requerir que los CI checks (tus tests) pasen antes de permitir merge. Así, código con tests fallados no puede llegar a main." },
+    { q: "¿Para qué sirve la 'matrix strategy' en GitHub Actions?", opts: ["Para organizar el código en matrices", "Para correr el mismo job con múltiples configuraciones en paralelo (ej: diferentes browsers)", "Para hacer tests en múltiples idiomas", "Para conectar múltiples repos"], correct: 1, explanation: "matrix: {browser: [chrome, firefox, safari]} corre el job 3 veces en paralelo, una por browser. Reduce dramáticamente el tiempo total de ejecución." },
+    { q: "¿Qué es un 'artefacto' en el contexto de CI/CD?", opts: ["Un bug en el pipeline", "Archivos generados durante el pipeline que se quieren preservar (reportes, screenshots, videos)", "El código fuente del proyecto", "Una variable de entorno"], correct: 1, explanation: "Los artefactos son archivos que el pipeline genera y preserva: reportes HTML de Allure, screenshots de tests fallados, videos. Son evidencia del resultado." },
+  ],
+  reporting: [
+    { q: "¿Qué herramienta genera reportes HTML interactivos con gráficos de tendencia para tests?", opts: ["Excel", "Allure Framework", "Jira", "Confluence"], correct: 1, explanation: "Allure Framework es el estándar de facto: gráficos de tendencia, breakdown por feature, screenshots en fallos, integración con todos los frameworks." },
+    { q: "¿Cuál es una buena métrica objetivo para el porcentaje de tests pasando?", opts: ["50%", "70%", "80%", ">95%"], correct: 3, explanation: "Si más del 5% de tus tests están fallando consistentemente, la suite pierde credibilidad. El equipo empieza a ignorar los fallos. >95% mantiene la confianza." },
+    { q: "¿Cuál es la CAUSA MÁS COMÚN de flaky tests?", opts: ["El código de la aplicación es inestable", "Race conditions y waits mal implementados que hacen los tests dependientes del timing", "Hardware lento", "El framework tiene bugs"], correct: 1, explanation: "Race conditions (el test continúa antes de que la UI esté lista) son la causa #1. Solución: reemplazar sleeps fijos con waits explícitos inteligentes." },
+    { q: "Un buen bug report de automatización debe incluir:", opts: ["Solo el nombre del test fallado", "Pasos reproducibles, resultado actual vs esperado, screenshot/video, ambiente y severidad", "Solo la excepción del framework", "Un link al código del test"], correct: 1, explanation: "La evidencia completa (screenshot, video, logs) acelera dramáticamente la resolución. Un dev no debería necesitar reproducir manualmente un bug si el reporte es completo." },
+    { q: "¿Qué indica una 'flaky rate' alta (>10%) en tu suite de automatización?", opts: ["Que la aplicación tiene muchos bugs", "Que los tests están mal escritos y dependen de timing o datos compartidos inestables", "Que el CI/CD server es lento", "Que hay pocas pruebas"], correct: 1, explanation: "Alta flaky rate destruye la confianza en la automatización. El equipo empieza a ignorar los fallos ('es solo flaky'). Corregir flaky tests es tan importante como escribir nuevos." },
+  ],
+};
+
+const GLOSSARY = [
+  { term: "Page Object Model (POM)", def: "Patrón de diseño donde cada página de la aplicación se representa como una clase. La clase encapsula los selectores (elementos) y los métodos (acciones) de esa página. Beneficio: si cambia un selector, solo se actualiza un archivo, no todos los tests." },
+  { term: "Test Suite", def: "Colección organizada de tests relacionados. Puede ser por feature (LoginSuite), por tipo (SmokeTests, RegressionTests) o por componente. Una buena organización en suites facilita ejecutar subconjuntos relevantes en diferentes momentos del pipeline." },
+  { term: "Assertion", def: "Verificación explícita en un test que comprueba si una condición es verdadera. Si falla, el test falla. Ejemplos: expect(status).toBe(200), assert title == 'Home', cy.get('#error').should('be.visible'). Sin assertions, un test no prueba nada." },
+  { term: "Selector CSS/XPath", def: "Forma de identificar un elemento en el DOM para interactuar con él. CSS: '#login-btn', '.submit-button'. XPath: '//button[@data-testid=\"submit\"]'. Los selectores por data-testid son más estables que los basados en clases de estilo." },
+  { term: "CI/CD", def: "Continuous Integration / Continuous Delivery. CI: práctica de integrar cambios frecuentemente y ejecutar tests automáticamente. CD: desplegar automáticamente a ambientes. Para QA, CI es donde viven y corren los tests automatizados en cada cambio de código." },
+  { term: "Mock", def: "Objeto que simula el comportamiento de una dependencia real (API, base de datos) en un test. Permite testear un componente aisladamente sin depender de servicios externos. Los mocks también pueden verificar que se llamaron con los parámetros correctos." },
+  { term: "Stub", def: "Versión simplificada de una dependencia que retorna respuestas predefinidas. A diferencia del Mock, el Stub no verifica comportamiento, solo reemplaza la respuesta. Útil para simular APIs lentas, caídas o respuestas de error específicas." },
+  { term: "Fixture", def: "Datos de prueba predefinidos y reutilizables. En Cypress/Playwright: archivos JSON en carpeta fixtures/. Permiten separar los datos de la lógica del test y reutilizarlos en múltiples tests sin hardcodear valores." },
+  { term: "Flaky Test", def: "Test que falla intermitentemente sin cambios en el código o la aplicación. Son el mayor problema en automatización porque erosionan la confianza del equipo. Causas: race conditions, dependencias externas, datos compartidos entre tests, waits fijos." },
+  { term: "Headless Browser", def: "Browser que corre sin interfaz gráfica (GUI). Los tests corren más rápido y se pueden ejecutar en servidores sin pantalla (como los de CI/CD). Playwright y Puppeteer corren headless por defecto en CI. Puedes cambiar a modo visible para debugging." },
+  { term: "Test Runner", def: "Herramienta que ejecuta los tests y reporta los resultados. Ejemplos: Jest (JS), pytest (Python), TestNG (Java). El test runner maneja: descubrimiento de tests, ejecución, timeouts, y generación de reportes básicos." },
+  { term: "Locator", def: "En Playwright, un locator es una representación lazy de un elemento que se resuelve en tiempo de ejecución. page.getByRole('button', {name: 'Submit'}). Más robusto que los selectores estáticos porque incluye auto-waits y reintentos automáticos." },
+  { term: "Smoke Test", def: "Conjunto mínimo de tests que verifican que la funcionalidad más crítica del sistema funciona básicamente. Corren rápido (5-10 min) después de cada deploy para confirmar que 'no hay humo' antes de tests más profundos." },
+  { term: "Regression Test", def: "Tests que verifican que cambios nuevos no rompieron funcionalidad existente. La suite de regresión es el corazón de la automatización: crece con cada bug corregido para que no vuelva a ocurrir." },
+  { term: "Test Data Management", def: "Estrategia para manejar los datos que usan los tests. Opciones: fixtures (datos estáticos), factories (datos generados dinámicamente), base de datos de test, datos seedeados. Los tests deben ser independientes y no compartir datos mutables." },
+];
+
+const CODE_CHALLENGES = [
+  {
+    id: "xpath", title: "Escribir un Selector XPath Robusto", difficulty: "Básico", language: "XPath",
+    description: "Dado el siguiente HTML, escribe el XPath más robusto para seleccionar el botón de submit del formulario de login.",
+    html: `<form id="login-form">
+  <input type="email" name="email" placeholder="Email" />
+  <input type="password" name="password" />
+  <button class="btn btn-primary" 
+          data-testid="login-submit"
+          type="submit">
+    Iniciar Sesión
+  </button>
+</form>`,
+    options: [
+      { code: `//button[@class='btn btn-primary']`, label: "Por clase CSS", correct: false, explanation: "❌ Frágil: si cambia el estilo o se agrega una clase, el selector deja de funcionar." },
+      { code: `//button[@data-testid='login-submit']`, label: "Por data-testid", correct: true, explanation: "✅ Correcto: data-testid existe específicamente para testing y es estable a cambios de diseño." },
+      { code: `//button[text()='Iniciar Sesión']`, label: "Por texto visible", correct: false, explanation: "⚠️ Aceptable pero frágil a cambios de copy o internacionalización. Prefiere data-testid." },
+      { code: `//form/button`, label: "Por estructura DOM", correct: false, explanation: "❌ Frágil: si el HTML se reestructura o se agregan botones, puede apuntar al elemento equivocado." },
+    ],
+  },
+  {
+    id: "test-structure", title: "Estructurar un Test Básico", difficulty: "Básico", language: "JavaScript (Playwright)",
+    description: "¿Cuál de las siguientes estructuras de test es la MÁS correcta para testear el login?",
+    options: [
+      { code: `test('login', async ({ page }) => {\n  await page.goto('/login');\n  await page.fill('#email', 'user@test.com');\n  await page.fill('#password', '123456');\n  await page.click('#submit');\n  // Sin assertions\n});`, label: "Test sin assertions", correct: false, explanation: "❌ Sin assertions el test siempre pasa aunque el login falle. Un test sin expect() no prueba nada." },
+      { code: `test('login con credenciales válidas redirige al dashboard',\n  async ({ page }) => {\n  // Arrange\n  await page.goto('/login');\n  \n  // Act\n  await page.getByTestId('email-input').fill('user@test.com');\n  await page.getByTestId('password-input').fill('SecurePass123');\n  await page.getByTestId('login-btn').click();\n  \n  // Assert\n  await expect(page).toHaveURL('/dashboard');\n  await expect(page.getByTestId('welcome-msg')).toBeVisible();\n});`, label: "Test con patrón AAA", correct: true, explanation: "✅ Patrón Arrange-Act-Assert, nombre descriptivo, selectores por testid, assertions claras sobre URL y elemento visible." },
+      { code: `test('test', async ({ page }) => {\n  page.goto('/login');\n  page.fill('#email', 'user');\n  page.click('#submit');\n  expect(page.url()).toBe('/dash');\n});`, label: "Test sin await", correct: false, explanation: "❌ Sin await las acciones son asíncronas y el test continúa sin esperar. Causará errores aleatorios (flaky tests)." },
+    ],
+  },
+  {
+    id: "find-bug", title: "Encontrar el Bug en el Test", difficulty: "Intermedio", language: "JavaScript (Playwright)",
+    description: "Este test de checkout tiene un bug que causa que sea flaky. ¿Cuál es el problema?",
+    code: `test('checkout con tarjeta válida', async ({ page }) => {\n  await page.goto('/cart');\n  await page.click('[data-testid="checkout-btn"]');\n  \n  // El bug está aquí 👇\n  await page.waitForTimeout(2000);\n  \n  await page.fill('[data-testid="card-number"]', '4111111111111111');\n  await page.fill('[data-testid="card-expiry"]', '12/26');\n  await page.click('[data-testid="pay-btn"]');\n  \n  await expect(page.getByText('Pago exitoso')).toBeVisible();\n});`,
+    options: [
+      { code: "El selector del botón de checkout es incorrecto", label: "Selector malo", correct: false, explanation: "❌ El selector data-testid es correcto y robusto." },
+      { code: `await page.waitForTimeout(2000); // ← Sleep fijo = FLAKY\n\n// Solución correcta:\nawait page.waitForSelector('[data-testid="card-number"]');\n// o:\nawait expect(page.getByTestId('card-number')).toBeVisible();`, label: "waitForTimeout es un sleep fijo", correct: true, explanation: "✅ waitForTimeout(2000) es un sleep fijo. En CI puede ser insuficiente (server más lento). Reemplazar con wait explícito soluciona el flakiness." },
+      { code: "Falta cerrar el browser al final", label: "No se cierra el browser", correct: false, explanation: "❌ Playwright maneja el lifecycle del browser automáticamente en tests." },
+    ],
+  },
+  {
+    id: "api-test", title: "Test de API: Verificar Respuesta Completa", difficulty: "Intermedio", language: "JavaScript (Supertest)",
+    description: "¿Cuál es el test de API más COMPLETO para verificar la creación de un usuario?",
+    options: [
+      { code: `it('POST /users crea usuario', async () => {\n  const res = await request(app)\n    .post('/users')\n    .send({ name: 'Ana', email: 'ana@test.com' });\n  \n  expect(res.status).toBe(201);\n});`, label: "Solo verifica status code", correct: false, explanation: "⚠️ Solo verifica que el status sea 201 pero no que el usuario se creó correctamente ni qué datos retorna." },
+      { code: `it('POST /users crea usuario con datos válidos', async () => {\n  const userData = { name: 'Ana García', email: 'ana@test.com' };\n  \n  const res = await request(app)\n    .post('/users')\n    .send(userData)\n    .expect('Content-Type', /json/);\n  \n  expect(res.status).toBe(201);\n  expect(res.body).toMatchObject({\n    id: expect.any(Number),\n    name: 'Ana García',\n    email: 'ana@test.com',\n    createdAt: expect.any(String),\n  });\n  expect(res.headers['location']).toMatch(/\\/users\\/\\d+/);\n});`, label: "Verifica status, body schema, headers y datos", correct: true, explanation: "✅ Verifica: status 201, Content-Type JSON, estructura del body con schema matching, datos correctos, y header Location (REST best practice)." },
+    ],
+  },
+];
+
+const CHECKLIST_ITEMS = [
+  { id: "c1", category: "Mentalidad", text: "Puedo explicar la pirámide de testing y cuándo usar cada capa" },
+  { id: "c2", category: "Mentalidad", text: "Sé calcular el ROI básico de automatizar un test case" },
+  { id: "c3", category: "Programación", text: "Escribo funciones, loops y condicionales sin consultar documentación" },
+  { id: "c4", category: "Programación", text: "Entiendo OOP: clases, herencia, encapsulamiento" },
+  { id: "c5", category: "Programación", text: "Manejo async/await y puedo depurar errores de asincronía" },
+  { id: "c6", category: "Git", text: "Trabajo con ramas y hago PRs sin ayuda" },
+  { id: "c7", category: "Git", text: "Conozco el flujo completo: clone → branch → commit → push → PR → merge" },
+  { id: "c8", category: "Web Testing", text: "Escribo selectores CSS y XPath robustos (data-testid, aria-label)" },
+  { id: "c9", category: "Web Testing", text: "Implementé Page Object Model en al menos un proyecto" },
+  { id: "c10", category: "Web Testing", text: "Sé la diferencia entre waits implícitos, explícitos y sleep fijo" },
+  { id: "c11", category: "Web Testing", text: "Debugué y corregí al menos 3 flaky tests" },
+  { id: "c12", category: "API Testing", text: "Testeo APIs REST verificando status, body schema y headers" },
+  { id: "c13", category: "API Testing", text: "Manejo autenticación (Bearer tokens, cookies) en tests de API" },
+  { id: "c14", category: "API Testing", text: "Uso variables de entorno para separar ambientes en Postman/framework" },
+  { id: "c15", category: "CI/CD", text: "Tengo un pipeline en GitHub Actions que corre mis tests automáticamente" },
+  { id: "c16", category: "CI/CD", text: "Entiendo cómo configurar branch protection rules con CI checks" },
+  { id: "c17", category: "Reporting", text: "Genero reportes HTML automáticos de mis ejecuciones (Allure u otro)" },
+  { id: "c18", category: "Reporting", text: "Escribo bug reports completos con evidencia reproducible" },
+  { id: "c19", category: "Soft Skills", text: "Puedo explicar el valor de mis tests automatizados a stakeholders no técnicos" },
+  { id: "c20", category: "Soft Skills", text: "Colaboro con devs desde el diseño para incorporar data-testid en la UI" },
+];
+
+const TIPS = {
+  low: ["💡 Cada día de práctica importa. Empieza con 30 min de código diario.", "🔥 El mejor código de QA es el que se escribe. Abre un editor y practica.", "📚 Lee documentación oficial de Playwright o Cypress. Es la mejor fuente."],
+  mid: ["⚡ Ya tienes base sólida. Es momento de hacer tu primer proyecto real.", "🎯 Contribuye a un proyecto open source para ganar experiencia real.", "🔄 Refactoriza tus tests con POM si aún no lo hiciste."],
+  high: ["🚀 Estás cerca de ser QA Automatizador. Construye un portfolio en GitHub.", "💼 Busca oportunidades para automatizar tests manuales en tu empresa.", "🌟 Comparte tu aprendizaje. Enseñar es la mejor forma de consolidar."],
+};
+
+// ─── SUB-COMPONENTS ───────────────────────────────────────────────────────────
+
+function RoadmapView({ completed, onToggle }) {
+  const [expanded, setExpanded] = useState(null);
+  const [expandedTheory, setExpandedTheory] = useState(null);
+  return (
+    <div className="space-y-3 max-w-3xl mx-auto">
+      <div className="mb-6">
+        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.4rem", fontWeight: 700, color: "#fff", marginBottom: 4 }}>🗺️ Roadmap de Aprendizaje</h2>
+        <p style={{ color: "#94a3b8", fontSize: "0.85rem" }}>Tu hoja de ruta completa: QA Funcional → QA Automatizador</p>
+      </div>
+      {ROADMAP_STAGES.map((stage, i) => {
+        const isOpen = expanded === stage.id;
+        const isDone = completed[stage.id];
+        return (
+          <div key={stage.id} className="relative">
+            {i < ROADMAP_STAGES.length - 1 && (
+              <div style={{ position: "absolute", left: 20, top: "100%", width: 2, height: 12, background: isDone ? "#10b981" : "#1e293b", zIndex: 1 }} />
+            )}
+            <div style={{ borderRadius: 12, border: `1px solid ${isDone ? "#065f4644" : "#1e293b"}`, background: isDone ? "rgba(16,185,129,0.05)" : "rgba(15,23,42,0.6)", overflow: "hidden", transition: "all 0.2s" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", cursor: "pointer" }} onClick={() => setExpanded(isOpen ? null : stage.id)}>
+                <div style={{ width: 40, height: 40, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.25rem", flexShrink: 0, background: `${stage.color}18`, border: `1px solid ${stage.color}33` }}>{stage.icon}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <span style={{ fontWeight: 600, color: "#f1f5f9", fontSize: "0.9rem" }}>{stage.title}</span>
+                    <span style={{ fontSize: "0.7rem", padding: "2px 8px", borderRadius: 999, background: "rgba(139,92,246,0.15)", color: "#a78bfa", border: "1px solid rgba(139,92,246,0.3)", fontFamily: "var(--font-mono)" }}>{stage.duration}</span>
+                    {isDone && <span style={{ fontSize: "0.7rem", padding: "2px 8px", borderRadius: 999, background: "rgba(16,185,129,0.15)", color: "#6ee7b7", border: "1px solid rgba(16,185,129,0.3)" }}>✓ Completado</span>}
+                  </div>
+                  <p style={{ color: "#64748b", fontSize: "0.78rem", marginTop: 2 }}>{stage.subtitle}</p>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <button onClick={e => { e.stopPropagation(); onToggle(stage.id); }}
+                    style={{ width: 26, height: 26, borderRadius: "50%", border: `2px solid ${isDone ? "#10b981" : "#475569"}`, background: isDone ? "#10b981" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.2s" }}>
+                    {isDone && <Check size={12} color="#fff" />}
+                  </button>
+                  {isOpen ? <ChevronDown size={15} color="#64748b" /> : <ChevronRight size={15} color="#64748b" />}
+                </div>
+              </div>
+              {isOpen && (
+                <div style={{ padding: "0 16px 16px", borderTop: "1px solid #1e293b" }}>
+                  <p style={{ color: "#94a3b8", fontSize: "0.85rem", lineHeight: 1.6, marginTop: 14, marginBottom: 14 }}>{stage.description}</p>
+                  <div style={{ marginBottom: 14 }}>
+                    <p style={{ fontSize: "0.7rem", color: "#475569", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 8 }}>Skills Clave</p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {stage.skills.map(s => <span key={s} style={{ fontSize: "0.75rem", padding: "3px 10px", borderRadius: 8, background: "rgba(30,41,59,0.8)", color: "#94a3b8", border: "1px solid #334155" }}>{s}</span>)}
+                    </div>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: "0.7rem", color: "#475569", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 8 }}>📖 Teoría Esencial</p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      {stage.theory.map((t, idx) => {
+                        const key = `${stage.id}-${idx}`;
+                        return (
+                          <div key={idx} style={{ borderRadius: 8, border: "1px solid #1e293b", overflow: "hidden" }}>
+                            <button style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", background: "transparent", cursor: "pointer", textAlign: "left" }} onClick={() => setExpandedTheory(expandedTheory === key ? null : key)}>
+                              <span style={{ fontSize: "0.82rem", fontWeight: 500, color: "#818cf8" }}>{t.title}</span>
+                              {expandedTheory === key ? <ChevronDown size={13} color="#64748b" /> : <ChevronRight size={13} color="#64748b" />}
+                            </button>
+                            {expandedTheory === key && <div style={{ padding: "0 12px 12px", fontSize: "0.82rem", color: "#94a3b8", lineHeight: 1.65, background: "rgba(15,23,42,0.4)", borderTop: "1px solid #1e293b" }}>{t.content}</div>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <button onClick={() => onToggle(stage.id)}
+                    style={{ marginTop: 14, width: "100%", padding: "10px", borderRadius: 8, fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", transition: "all 0.2s", border: isDone ? "1px solid rgba(16,185,129,0.3)" : "none", background: isDone ? "rgba(16,185,129,0.1)" : "#4f46e5", color: isDone ? "#6ee7b7" : "#fff" }}>
+                    {isDone ? "✓ Marcar como pendiente" : "Marcar como completado ✓"}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function QuizView({ onScore }) {
+  const [selectedModule, setSelectedModule] = useState("mindset");
+  const [current, setCurrent] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [answered, setAnswered] = useState(false);
+  const [sessionScore, setSessionScore] = useState(0);
+  const [finished, setFinished] = useState(false);
+
+  const questions = QUIZ_DATA[selectedModule];
+  const q = questions[current];
+
+  const handleSelect = (idx) => {
+    if (answered) return;
+    setSelected(idx);
+    setAnswered(true);
+    if (idx === q.correct) setSessionScore(s => s + 1);
+  };
+
+  const handleNext = () => {
+    if (current < questions.length - 1) {
+      setCurrent(c => c + 1); setSelected(null); setAnswered(false);
+    } else {
+      onScore(selectedModule, sessionScore + (selected === q.correct ? 1 : 0));
+      setFinished(true);
+    }
+  };
+
+  const handleRestart = () => { setCurrent(0); setSelected(null); setAnswered(false); setSessionScore(0); setFinished(false); };
+  const handleModuleChange = (mod) => { setSelectedModule(mod); setCurrent(0); setSelected(null); setAnswered(false); setSessionScore(0); setFinished(false); };
+
+  const moduleLabels = { mindset: "🧠 Fundamentos", programming: "💻 Programación", git: "🌿 Git", "web-frameworks": "🌐 Web Testing", "api-testing": "🔌 API Testing", cicd: "⚙️ CI/CD", reporting: "📊 Reporting" };
+
+  return (
+    <div style={{ maxWidth: 700, margin: "0 auto" }}>
+      <div style={{ marginBottom: 24 }}>
+        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.4rem", fontWeight: 700, color: "#fff", marginBottom: 4 }}>🎯 Quiz por Módulo</h2>
+        <p style={{ color: "#94a3b8", fontSize: "0.85rem" }}>Pon a prueba tu conocimiento con preguntas interactivas</p>
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 20 }}>
+        {Object.entries(moduleLabels).map(([key, label]) => (
+          <button key={key} onClick={() => handleModuleChange(key)}
+            style={{ padding: "6px 12px", borderRadius: 8, fontSize: "0.75rem", fontWeight: 500, cursor: "pointer", border: "1px solid", transition: "all 0.15s", borderColor: selectedModule === key ? "#6366f1" : "#1e293b", background: selectedModule === key ? "#312e81" : "rgba(15,23,42,0.6)", color: selectedModule === key ? "#a5b4fc" : "#64748b" }}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {finished ? (
+        <div style={{ borderRadius: 16, border: "1px solid #1e293b", background: "rgba(15,23,42,0.8)", padding: 40, textAlign: "center" }}>
+          <div style={{ fontSize: "3rem", marginBottom: 12 }}>{sessionScore >= 4 ? "🏆" : sessionScore >= 3 ? "🎯" : "💪"}</div>
+          <h3 style={{ fontFamily: "var(--font-display)", fontSize: "1.5rem", color: "#fff", marginBottom: 8 }}>{sessionScore >= 4 ? "¡Excelente!" : sessionScore >= 3 ? "¡Bien hecho!" : "Sigue practicando"}</h3>
+          <p style={{ color: "#94a3b8", marginBottom: 6 }}>Obtuviste <span style={{ color: "#818cf8", fontWeight: 700, fontSize: "1.2rem" }}>{sessionScore}/{questions.length}</span> respuestas correctas</p>
+          <p style={{ color: "#64748b", fontSize: "0.85rem", marginBottom: 24 }}>{sessionScore >= 4 ? "¡Dominas este módulo! Avanza al siguiente." : "Repasa la teoría en el Roadmap y vuelve a intentarlo."}</p>
+          <button onClick={handleRestart} style={{ padding: "10px 24px", background: "#4f46e5", color: "#fff", borderRadius: 8, fontWeight: 600, fontSize: "0.85rem", cursor: "pointer", border: "none" }}>Reintentar Quiz</button>
+        </div>
+      ) : (
+        <div style={{ borderRadius: 16, border: "1px solid #1e293b", background: "rgba(15,23,42,0.8)", overflow: "hidden" }}>
+          <div style={{ padding: "14px 20px", borderBottom: "1px solid #1e293b", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ color: "#64748b", fontSize: "0.8rem", fontFamily: "var(--font-mono)" }}>Pregunta {current + 1} / {questions.length}</span>
+            <div style={{ display: "flex", gap: 4 }}>{questions.map((_, i) => <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: i < current ? "#10b981" : i === current ? "#6366f1" : "#1e293b" }} />)}</div>
+            <span style={{ color: "#818cf8", fontSize: "0.8rem", fontFamily: "var(--font-mono)", fontWeight: 600 }}>Score: {sessionScore}</span>
+          </div>
+          <div style={{ padding: 24 }}>
+            <p style={{ color: "#f1f5f9", fontWeight: 500, fontSize: "0.95rem", lineHeight: 1.6, marginBottom: 20 }}>{q.q}</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {q.opts.map((opt, i) => {
+                let bg = "rgba(30,41,59,0.5)", border = "#334155", color = "#cbd5e1", cursor = "pointer";
+                if (answered) {
+                  if (i === q.correct) { bg = "rgba(16,185,129,0.1)"; border = "#10b981"; color = "#6ee7b7"; cursor = "default"; }
+                  else if (i === selected) { bg = "rgba(239,68,68,0.1)"; border = "#ef4444"; color = "#fca5a5"; cursor = "default"; }
+                  else { bg = "rgba(15,23,42,0.3)"; border = "#1e293b"; color = "#475569"; cursor = "default"; }
+                } else if (selected === i) { bg = "rgba(99,102,241,0.15)"; border = "#6366f1"; }
+                return (
+                  <button key={i} onClick={() => handleSelect(i)}
+                    style={{ textAlign: "left", padding: "12px 16px", borderRadius: 10, border: `1px solid ${border}`, background: bg, cursor, transition: "all 0.15s", display: "flex", alignItems: "center", gap: 12 }}>
+                    <span style={{ width: 24, height: 24, borderRadius: "50%", border: `1px solid ${border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", flexShrink: 0, fontFamily: "var(--font-mono)", color }}>
+                      {answered && i === q.correct ? <Check size={11} /> : answered && i === selected && i !== q.correct ? <X size={11} /> : String.fromCharCode(65 + i)}
+                    </span>
+                    <span style={{ fontSize: "0.85rem", color, lineHeight: 1.5 }}>{opt}</span>
+                  </button>
+                );
+              })}
+            </div>
+            {answered && (
+              <div style={{ marginTop: 16, padding: "14px 16px", borderRadius: 10, fontSize: "0.85rem", lineHeight: 1.55, border: `1px solid ${selected === q.correct ? "rgba(16,185,129,0.3)" : "rgba(239,68,68,0.3)"}`, background: selected === q.correct ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)", color: selected === q.correct ? "#6ee7b7" : "#fca5a5" }}>
+                <strong>{selected === q.correct ? "✅ ¡Correcto! " : "❌ Incorrecto. "}</strong>{q.explanation}
+              </div>
+            )}
+          </div>
+          {answered && (
+            <div style={{ padding: "0 24px 24px" }}>
+              <button onClick={handleNext} style={{ width: "100%", padding: 12, background: "#4f46e5", color: "#fff", borderRadius: 10, fontWeight: 600, fontSize: "0.85rem", cursor: "pointer", border: "none" }}>
+                {current < questions.length - 1 ? "Siguiente pregunta →" : "Ver resultado final"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GlossaryView() {
+  const [expanded, setExpanded] = useState(null);
+  const [search, setSearch] = useState("");
+  const filtered = GLOSSARY.filter(g => g.term.toLowerCase().includes(search.toLowerCase()) || g.def.toLowerCase().includes(search.toLowerCase()));
+  return (
+    <div style={{ maxWidth: 700, margin: "0 auto" }}>
+      <div style={{ marginBottom: 24 }}>
+        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.4rem", fontWeight: 700, color: "#fff", marginBottom: 4 }}>📖 Glosario QA Automation</h2>
+        <p style={{ color: "#94a3b8", fontSize: "0.85rem" }}>{GLOSSARY.length} términos esenciales que todo QA Automatizador debe conocer</p>
+      </div>
+      <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar término..." style={{ width: "100%", padding: "10px 16px", background: "rgba(15,23,42,0.8)", border: "1px solid #1e293b", borderRadius: 10, fontSize: "0.85rem", color: "#fff", outline: "none", marginBottom: 16, boxSizing: "border-box" }} />
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {filtered.map((g, i) => (
+          <div key={i} style={{ borderRadius: 10, border: "1px solid #1e293b", background: "rgba(15,23,42,0.6)", overflow: "hidden" }}>
+            <button style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", cursor: "pointer", background: "transparent", textAlign: "left" }} onClick={() => setExpanded(expanded === i ? null : i)}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#6366f1", flexShrink: 0 }} />
+                <span style={{ fontWeight: 600, color: "#e2e8f0", fontSize: "0.875rem" }}>{g.term}</span>
+              </div>
+              {expanded === i ? <ChevronDown size={14} color="#64748b" /> : <ChevronRight size={14} color="#64748b" />}
+            </button>
+            {expanded === i && <div style={{ padding: "0 16px 14px", fontSize: "0.82rem", color: "#94a3b8", lineHeight: 1.65, borderTop: "1px solid #1e293b", paddingTop: 12, background: "rgba(15,23,42,0.3)" }}>{g.def}</div>}
+          </div>
+        ))}
+        {filtered.length === 0 && <p style={{ textAlign: "center", color: "#475569", padding: 32 }}>No se encontraron términos para "{search}"</p>}
+      </div>
+    </div>
+  );
+}
+
+function ChallengesView({ solved, onSolve }) {
+  const [active, setActive] = useState(null);
+  const [picked, setPicked] = useState({});
+  const [revealed, setRevealed] = useState({});
+
+  const handleReveal = (chalId) => {
+    setRevealed(r => ({ ...r, [chalId]: true }));
+    const chal = CODE_CHALLENGES.find(c => c.id === chalId);
+    const correct = chal.options.findIndex(o => o.correct);
+    if (picked[chalId] === correct) onSolve(chalId);
+  };
+
+  return (
+    <div style={{ maxWidth: 800, margin: "0 auto" }}>
+      <div style={{ marginBottom: 24 }}>
+        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.4rem", fontWeight: 700, color: "#fff", marginBottom: 4 }}>⚡ Mini Retos de Código</h2>
+        <p style={{ color: "#94a3b8", fontSize: "0.85rem" }}>Ejercicios prácticos para consolidar tu conocimiento</p>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 10, marginBottom: 20 }}>
+        {CODE_CHALLENGES.map(c => (
+          <button key={c.id} onClick={() => setActive(active === c.id ? null : c.id)}
+            style={{ padding: 14, borderRadius: 12, border: `1px solid ${active === c.id ? "#6366f1" : solved[c.id] ? "#065f46" : "#1e293b"}`, background: active === c.id ? "rgba(99,102,241,0.1)" : solved[c.id] ? "rgba(16,185,129,0.05)" : "rgba(15,23,42,0.6)", cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+              <span style={{ fontSize: "0.7rem", padding: "2px 8px", borderRadius: 999, background: c.difficulty === "Básico" ? "rgba(16,185,129,0.15)" : "rgba(245,158,11,0.15)", color: c.difficulty === "Básico" ? "#6ee7b7" : "#fcd34d", border: `1px solid ${c.difficulty === "Básico" ? "rgba(16,185,129,0.3)" : "rgba(245,158,11,0.3)"}` }}>{c.difficulty}</span>
+              {solved[c.id] && <span style={{ color: "#10b981", fontSize: "0.75rem" }}>✓</span>}
+            </div>
+            <p style={{ color: "#e2e8f0", fontSize: "0.8rem", fontWeight: 500, lineHeight: 1.4, marginBottom: 4 }}>{c.title}</p>
+            <p style={{ color: "#475569", fontSize: "0.7rem", fontFamily: "var(--font-mono)" }}>{c.language}</p>
+          </button>
+        ))}
+      </div>
+
+      {active && (() => {
+        const chal = CODE_CHALLENGES.find(c => c.id === active);
+        return (
+          <div style={{ borderRadius: 16, border: "1px solid #1e293b", background: "rgba(15,23,42,0.8)", overflow: "hidden" }}>
+            <div style={{ padding: "16px 20px", borderBottom: "1px solid #1e293b", display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+              <div>
+                <h3 style={{ color: "#fff", fontWeight: 700, fontSize: "1rem", marginBottom: 6 }}>{chal.title}</h3>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <span style={{ fontSize: "0.7rem", padding: "2px 8px", borderRadius: 999, background: "rgba(139,92,246,0.15)", color: "#c4b5fd", border: "1px solid rgba(139,92,246,0.3)" }}>{chal.language}</span>
+                </div>
+              </div>
+              {solved[chal.id] && <span style={{ color: "#10b981", fontSize: "0.85rem", fontWeight: 600 }}>✅ Resuelto</span>}
+            </div>
+            <div style={{ padding: 20 }}>
+              <p style={{ color: "#94a3b8", fontSize: "0.85rem", marginBottom: 16 }}>{chal.description}</p>
+              {(chal.html || chal.code) && (
+                <div style={{ borderRadius: 10, background: "#020617", border: "1px solid #1e293b", padding: 16, marginBottom: 16 }}>
+                  <p style={{ fontSize: "0.7rem", color: "#475569", marginBottom: 8, fontFamily: "var(--font-mono)", textTransform: "uppercase" }}>{chal.html ? "HTML de referencia" : "Código a analizar"}</p>
+                  <pre style={{ fontSize: "0.78rem", color: "#e2e8f0", fontFamily: "var(--font-mono)", margin: 0, overflow: "auto", whiteSpace: "pre-wrap", lineHeight: 1.6 }}>{chal.html || chal.code}</pre>
+                </div>
+              )}
+              <p style={{ fontSize: "0.85rem", fontWeight: 600, color: "#cbd5e1", marginBottom: 12 }}>¿Cuál es la respuesta correcta?</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {chal.options.map((opt, i) => {
+                  let bg = "rgba(30,41,59,0.5)", border = "#334155", cursor = "pointer";
+                  if (revealed[chal.id]) {
+                    if (opt.correct) { bg = "rgba(16,185,129,0.1)"; border = "#10b981"; cursor = "default"; }
+                    else if (picked[chal.id] === i) { bg = "rgba(239,68,68,0.1)"; border = "#ef4444"; cursor = "default"; }
+                    else { bg = "transparent"; border = "#1e293b"; cursor = "default"; }
+                  } else if (picked[chal.id] === i) { bg = "rgba(99,102,241,0.15)"; border = "#6366f1"; }
+                  return (
+                    <div key={i} onClick={() => !revealed[chal.id] && setPicked(p => ({ ...p, [chal.id]: i }))}
+                      style={{ padding: 16, borderRadius: 10, border: `1px solid ${border}`, background: bg, cursor, transition: "all 0.15s" }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                        <div style={{ width: 18, height: 18, borderRadius: "50%", border: `2px solid ${picked[chal.id] === i && !revealed[chal.id] ? "#6366f1" : border}`, background: picked[chal.id] === i && !revealed[chal.id] ? "#6366f1" : "transparent", flexShrink: 0, marginTop: 2 }} />
+                        <div style={{ flex: 1 }}>
+                          <p style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 600, marginBottom: 4 }}>{opt.label}</p>
+                          <pre style={{ fontSize: "0.75rem", color: "#94a3b8", fontFamily: "var(--font-mono)", margin: 0, whiteSpace: "pre-wrap", lineHeight: 1.55 }}>{opt.code}</pre>
+                          {revealed[chal.id] && <p style={{ fontSize: "0.8rem", marginTop: 8, color: opt.correct ? "#6ee7b7" : "#fca5a5", lineHeight: 1.55 }}>{opt.explanation}</p>}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {picked[chal.id] !== undefined && !revealed[chal.id] && (
+                <button onClick={() => handleReveal(chal.id)} style={{ marginTop: 14, width: "100%", padding: 12, background: "#7c3aed", color: "#fff", borderRadius: 10, fontWeight: 600, fontSize: "0.85rem", cursor: "pointer", border: "none" }}>Revelar respuesta</button>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
+function ChecklistView({ checked, onToggle }) {
+  const total = CHECKLIST_ITEMS.length;
+  const done = Object.values(checked).filter(Boolean).length;
+  const pct = (done / total) * 100;
+  const categories = [...new Set(CHECKLIST_ITEMS.map(i => i.category))];
+  const progressColor = pct >= 80 ? "#10b981" : pct >= 50 ? "#f59e0b" : "#6366f1";
+
+  return (
+    <div style={{ maxWidth: 700, margin: "0 auto" }}>
+      <div style={{ marginBottom: 24 }}>
+        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.4rem", fontWeight: 700, color: "#fff", marginBottom: 4 }}>✅ Checklist de Transición</h2>
+        <p style={{ color: "#94a3b8", fontSize: "0.85rem" }}>Las {total} habilidades que debes dominar para llamarte QA Automatizador</p>
+      </div>
+      <div style={{ borderRadius: 14, border: "1px solid #1e293b", background: "rgba(15,23,42,0.8)", padding: 20, marginBottom: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <span style={{ color: "#e2e8f0", fontWeight: 600 }}>Progreso general</span>
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: "1.8rem", fontWeight: 700, color: progressColor }}>{Math.round(pct)}%</span>
+        </div>
+        <div style={{ height: 8, background: "#0f172a", borderRadius: 999, overflow: "hidden" }}>
+          <div style={{ height: "100%", width: `${pct}%`, background: `linear-gradient(90deg, #6366f1, ${progressColor})`, borderRadius: 999, transition: "width 0.5s ease" }} />
+        </div>
+        <p style={{ color: "#475569", fontSize: "0.8rem", marginTop: 8 }}>{done} de {total} habilidades completadas</p>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {categories.map(cat => {
+          const items = CHECKLIST_ITEMS.filter(i => i.category === cat);
+          const catDone = items.filter(i => checked[i.id]).length;
+          return (
+            <div key={cat} style={{ borderRadius: 12, border: "1px solid #1e293b", background: "rgba(15,23,42,0.6)", overflow: "hidden" }}>
+              <div style={{ padding: "12px 16px", borderBottom: "1px solid #1e293b", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontWeight: 600, color: "#e2e8f0", fontSize: "0.875rem" }}>{cat}</span>
+                <span style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: catDone === items.length ? "#10b981" : "#64748b" }}>{catDone}/{items.length}</span>
+              </div>
+              <div>
+                {items.map((item, idx) => (
+                  <div key={item.id} onClick={() => onToggle(item.id)}
+                    style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 16px", cursor: "pointer", borderBottom: idx < items.length - 1 ? "1px solid #0f172a" : "none", transition: "background 0.1s" }}>
+                    <div style={{ width: 20, height: 20, borderRadius: 5, border: `2px solid ${checked[item.id] ? "#10b981" : "#334155"}`, background: checked[item.id] ? "#10b981" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1, transition: "all 0.15s" }}>
+                      {checked[item.id] && <Check size={11} color="#fff" />}
+                    </div>
+                    <p style={{ fontSize: "0.85rem", lineHeight: 1.55, color: checked[item.id] ? "#475569" : "#cbd5e1", textDecoration: checked[item.id] ? "line-through" : "none" }}>{item.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── MAIN APP ─────────────────────────────────────────────────────────────────
+export default function App() {
+  const [activeTab, setActiveTab] = useState("roadmap");
+  const [stagesCompleted, setStagesCompleted] = useState({});
+  const [checklistDone, setChecklistDone] = useState({});
+  const [challengesSolved, setChallengesSolved] = useState({});
+  const [quizScores, setQuizScores] = useState({});
+  const [celebration, setCelebration] = useState(null);
+
+  const totalProgress = (() => {
+    const r = (Object.values(stagesCompleted).filter(Boolean).length / ROADMAP_STAGES.length) * 30;
+    const c = (Object.values(checklistDone).filter(Boolean).length / CHECKLIST_ITEMS.length) * 40;
+    const ch = (Object.values(challengesSolved).filter(Boolean).length / CODE_CHALLENGES.length) * 15;
+    const q = (Object.keys(quizScores).length / Object.keys(QUIZ_DATA).length) * 15;
+    return r + c + ch + q;
+  })();
+
+  const tipLevel = totalProgress < 30 ? "low" : totalProgress < 70 ? "mid" : "high";
+  const currentTip = TIPS[tipLevel][0];
+
+  const toast = (msg) => { setCelebration(msg); setTimeout(() => setCelebration(null), 3000); };
+  const toggleStage = (id) => { const was = stagesCompleted[id]; setStagesCompleted(s => ({ ...s, [id]: !s[id] })); if (!was) { const st = ROADMAP_STAGES.find(s => s.id === id); toast(`¡Completaste "${st.title}"! 🎉`); } };
+  const toggleChecklist = (id) => setChecklistDone(s => ({ ...s, [id]: !s[id] }));
+  const solveChallenge = (id) => { setChallengesSolved(s => ({ ...s, [id]: true })); toast("¡Reto superado! ⚡"); };
+  const handleQuizScore = (mod, score) => setQuizScores(s => ({ ...s, [mod]: Math.max(s[mod] || 0, score) }));
+
+  const tabs = [
+    { id: "roadmap", label: "Roadmap", icon: Map },
+    { id: "quiz", label: "Quiz", icon: HelpCircle },
+    { id: "glossary", label: "Glosario", icon: BookOpen },
+    { id: "challenges", label: "Retos", icon: Code },
+    { id: "checklist", label: "Checklist", icon: List },
+  ];
+
+  const progressColor = totalProgress >= 80 ? "#10b981" : totalProgress >= 50 ? "#f59e0b" : "#6366f1";
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#020617", color: "#fff", fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        :root { --font-display: 'Space Grotesk', system-ui; --font-mono: 'JetBrains Mono', monospace; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #020617; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+        button { font-family: inherit; }
+        input { font-family: inherit; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-12px) translateX(-50%); } to { opacity: 1; transform: translateY(0) translateX(-50%); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+      `}</style>
+
+      {/* Celebration */}
+      {celebration && (
+        <div style={{ position: "fixed", top: 20, left: "50%", zIndex: 999, padding: "10px 24px", background: "linear-gradient(135deg, #059669, #0d9488)", borderRadius: 999, color: "#fff", fontWeight: 600, fontSize: "0.85rem", boxShadow: "0 8px 32px rgba(16,185,129,0.4)", animation: "slideDown 0.3s ease", whiteSpace: "nowrap" }}>
+          {celebration}
+        </div>
+      )}
+
+      {/* Header */}
+      <div style={{ position: "sticky", top: 0, zIndex: 40, borderBottom: "1px solid #0f172a", background: "rgba(2,6,23,0.95)", backdropFilter: "blur(12px)" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 16px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "12px 0" }}>
+            {/* Logo */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+              <div style={{ width: 34, height: 34, borderRadius: 10, background: "linear-gradient(135deg, #6366f1, #7c3aed)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Zap size={16} color="#fff" />
+              </div>
+              <div style={{ display: "none" }} className="sm-show">
+                <p style={{ fontFamily: "var(--font-display)", fontSize: "0.85rem", fontWeight: 700, color: "#fff", lineHeight: 1.2 }}>QA Path</p>
+                <p style={{ fontSize: "0.7rem", color: "#475569", lineHeight: 1.2 }}>Funcional → Automatizador</p>
+              </div>
+            </div>
+
+            {/* Progress */}
+            <div style={{ flex: 1, maxWidth: 320 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ flex: 1, height: 6, background: "#0f172a", borderRadius: 999, overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${totalProgress}%`, background: `linear-gradient(90deg, #6366f1, #7c3aed, ${progressColor})`, borderRadius: 999, transition: "width 0.7s ease" }} />
+                </div>
+                <span style={{ fontSize: "0.75rem", fontFamily: "var(--font-mono)", color: progressColor, flexShrink: 0, fontWeight: 600 }}>{Math.round(totalProgress)}%</span>
+              </div>
+            </div>
+
+            {/* Tip */}
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.75rem", color: "#64748b", background: "rgba(15,23,42,0.8)", padding: "6px 12px", borderRadius: 8, border: "1px solid #1e293b", maxWidth: 280, overflow: "hidden" }}>
+              <span style={{ flexShrink: 0 }}>💡</span>
+              <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{currentTip}</span>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div style={{ display: "flex", gap: 2, overflowX: "auto", paddingBottom: 0 }}>
+            {tabs.map(tab => {
+              const Icon = tab.icon;
+              const active = activeTab === tab.id;
+              return (
+                <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                  style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 14px", fontSize: "0.8rem", fontWeight: 500, cursor: "pointer", borderBottom: `2px solid ${active ? "#6366f1" : "transparent"}`, background: "transparent", border: "none", borderBottomWidth: 2, borderBottomStyle: "solid", borderBottomColor: active ? "#6366f1" : "transparent", color: active ? "#818cf8" : "#475569", flexShrink: 0, transition: "all 0.15s" }}>
+                  <Icon size={14} />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 16px" }}>
+        {activeTab === "roadmap" && <RoadmapView completed={stagesCompleted} onToggle={toggleStage} />}
+        {activeTab === "quiz" && <QuizView onScore={handleQuizScore} />}
+        {activeTab === "glossary" && <GlossaryView />}
+        {activeTab === "challenges" && <ChallengesView solved={challengesSolved} onSolve={solveChallenge} />}
+        {activeTab === "checklist" && <ChecklistView checked={checklistDone} onToggle={toggleChecklist} />}
+      </div>
+    </div>
+  );
+}
+
+
+  ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
